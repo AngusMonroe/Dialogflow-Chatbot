@@ -102,3 +102,10 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# macOS
+.DS_Store
+.idea
+*.bak
+Aminer-6a6a9b74dd50.json
+.env
