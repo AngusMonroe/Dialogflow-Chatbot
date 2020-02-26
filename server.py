@@ -1,3 +1,4 @@
+
 from flask import Flask
 from flask import render_template
 from flask import request
@@ -6,6 +7,10 @@ import time
 import json
 import os
 import dialogflow
+from urllib import parse
+import requests
+import re
+from google.protobuf.json_format import MessageToDict
 
 try:
     fp = open('.env', 'r', encoding='utf8')
@@ -52,18 +57,25 @@ def detect_intent_texts(project_id, session_id, text, language_code):
         query_input = dialogflow.types.QueryInput(text=text_input)
         response = session_client.detect_intent(
             session=session, query_input=query_input)
+        dict_obj = MessageToDict(response.query_result)
+        print(dict_obj)
+        entity_dic = {}
+        for key in dict_obj['parameters'].keys():
+            if dict_obj['parameters'][key]:
+                entity_dic[key] = dict_obj['parameters'][key]
 
-        return response.query_result.fulfillment_text
+        res = {"query_text": dict_obj['queryText'],
+               "intent": dict_obj['intent']['displayName'],
+               "entity": entity_dic}
+        return res
 
 
 def ans(query):
     start = time.time()
-    fulfillment_text = detect_intent_texts(project_id, "unique", query, 'en')
-    response_text = {"message": fulfillment_text}
-
+    response_text = detect_intent_texts(project_id, "unique", query, 'zh-CN')
     end = time.time()
     print('[LOG INFO] parse time:', end-start)
-    return json.dumps(response_text)
+    return json.dumps(response_text).encode('utf-8').decode('unicode_escape')
 
 
 @app.route('/query/<query>')
@@ -79,8 +91,9 @@ def QA(query):
     else:
         return 'hello world'
 
+
 if __name__ == '__main__':
-    # implicit()
+    implicit()
     app.debug = True
     app.run(host='0.0.0.0', port=5000)
     # while(1):
